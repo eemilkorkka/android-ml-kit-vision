@@ -1,6 +1,7 @@
 package net.simplifiedcoding.mlkitsample.qrscanner
 
 import android.annotation.SuppressLint
+import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -95,7 +96,9 @@ class ScannerActivity : AppCompatActivity() {
         barcodeScanner.process(inputImage)
             .addOnSuccessListener { barcodes ->
                 if (barcodes.isNotEmpty()) {
-                    showBarcodeInfo(barcodes.first())
+                    onScan?.invoke(barcodes)
+                    onScan = null
+                    finish()
                 }
             }
             .addOnFailureListener {
@@ -104,30 +107,13 @@ class ScannerActivity : AppCompatActivity() {
                 imageProxy.close()
             }
     }
-
-    private fun showBarcodeInfo(barcode: Barcode) {
-        when (barcode.valueType) {
-            Barcode.TYPE_URL -> {
-                binding.textViewQrType.text = "URL"
-                binding.textViewQrContent.text = barcode.rawValue
-            }
-            Barcode.TYPE_CONTACT_INFO -> {
-                binding.textViewQrType.text = "Contact"
-                binding.textViewQrContent.text = barcode.contactInfo.toString()
-            }
-            else -> {
-                binding.textViewQrType.text = "Other"
-                binding.textViewQrContent.text = barcode.rawValue
-            }
-        }
-    }
-
     companion object {
-        private val TAG = ScannerActivity::class.simpleName
-
-        fun startScanner(context: Context) {
+        private var onScan: ((bardcodes: List<Barcode>) -> Unit)? = null
+        fun startScanner(context: Context, onScan: (barcodes: List<Barcode>)-> Unit) {
+            this.onScan = onScan
             Intent(context, ScannerActivity::class.java).also {
                 context.startActivity(it)
+
             }
         }
     }
